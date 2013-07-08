@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html style="width:100%; height:100%">
+    <head>
+        <meta charset='utf-8'>
+        <title></title>
+
+        <script>
+
+window.onload = function(){
+
+    var svgNS = "http://www.w3.org/2000/svg",
+    xlinkNS = "http://www.w3.org/1999/xlink",
+    X=0,
+    Y=1,
+    S = ' ',
+    RADS=Math.PI*2,
+    PI=Math.PI;
+
+var test_legs = [
+    {from: 'E', to: '2', disto: 30.5, compass:   0, clino: -90},
+    {from: '2', to: '3', disto:  2.9, compass: 301, clino:  28},
+    {from: '3', to: '4', disto:  3.6, compass: 236, clino:  20},
+    {from: '4', to: '5', disto: 18.5, compass: 245, clino:  58},
+    {from: '2', to: '6', disto:  8.8, compass: 205, clino: -13},
+    {from: '6', to: '4', disto:  8.1, compass: 180-167, clino: -22},
+    {from: '6', to: '7', disto:  4.3, compass: 180, clino: -36},
+    {from: '7', to: '8', disto:  3.9, compass: 202, clino: -23},
+    {from: '8', to: '9', disto:  5.6, compass: 198, clino: -11},
+    {from: '9', to: '10', disto: 15.3, compass: 281, clino:  41},
+    {from: '9', to: '11', disto:  3.5, compass:   0, clino: -90},
+    {from: '9', to: '12', disto: 10.2, compass: 184, clino:   0},
+    {from: '12', to: '13', disto:  3.6, compass: 149, clino: -36},
+    {from: '11', to: '14', disto:  3  , compass: 163, clino:  20},
+    {from: '14', to: '15', disto: 16.1, compass:  27, clino:   0},
+    {from: '15', to: '16', disto:  4.5, compass:  86, clino:  10},
+    {from: '16', to: '17', disto:  6  , compass:  65, clino:   5},
+    {from: '17', to: '18', disto: 18.8, compass:  14, clino:   0},
+    {from: '18', to: '19', disto:  2.7, compass:  47, clino:  32},
+    {from: '19', to: '20', disto:  4.3, compass: 121, clino:  -1},
+    {from: '14', to: '21', disto:  2.4, compass: 156, clino:  44},
+    {from: '21', to: '22', disto:  9.8, compass: 192, clino:   0},
+    {from: '22', to: '23', disto:  6.5, compass: 146, clino:  -6},
+    {from: '23', to: '24', disto:  4.1, compass:  17, clino: -17},
+    {from: '24', to: '25', disto:  4.3, compass: 335, clino: -11}
+];
+
+function degToRad(deg){
+    return (deg/360) * (2*Math.PI);
+}
+
+var svg = document.getElementById("survey");
+
+var legs = [];
+var stations = {
+    'E': {x: 0, y: 0}
+};
+
+function add_leg(data){
+    legs.push(data);
+    if(stations[data.to]){ console.warn('station', data.to, 'redefined'); };
+    stations[data.to] = {
+        x: stations[data.from].x + Math.sin(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino)),
+        y: stations[data.from].y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino))
+    };
+
+    redraw();
+}
+
+var offset_x, offset_y, scale;
+
+function redraw(){
+    while (svg.childNodes.length > 2) {
+        svg.removeChild(svg.lastChild);
+    }
+
+    var max_x=0, min_x=0, max_y=0, min_y=0;
+    for(name in stations){
+        if(stations[name].x < min_x){ min_x = stations[name].x; }
+        if(stations[name].y < min_y){ min_y = stations[name].y; }
+        if(stations[name].x > max_x){ max_x = stations[name].x; }
+        if(stations[name].y > max_y){ max_y = stations[name].y; }
+    };
+
+    scale = Math.min(svg.offsetHeight / (max_y-min_y), svg.offsetWidth / (max_x-min_x));
+
+    offset_x = -min_x * scale;
+    offset_y = -min_y * scale;
+
+    for (var i = 0; i < legs.length; i++) {
+        draw_leg(legs[i]);
+    };
+
+}
+
+function draw_leg(data){
+
+    var element = document.createElementNS(svgNS, "line");
+    element.setAttribute("x1", stations[data.from].x * scale + offset_x);
+    element.setAttribute("y1", stations[data.from].y * scale + offset_y);
+    element.setAttribute("x2", stations[data.to].x * scale + offset_x);
+    element.setAttribute("y2", stations[data.to].y * scale + offset_y);
+    element.setAttribute("stroke", '#fff');
+    svg.appendChild(element);
+}
+
+var form = document.getElementById('form');
+var from = document.getElementById('from');
+var to = document.getElementById('to');
+var disto = document.getElementById('disto');
+var compass = document.getElementById('compass');
+var clino = document.getElementById('clino');
+
+form.addEventListener('submit', function(event){
+
+    event.preventDefault();
+
+    add_leg({
+        from: from.value,
+        to: to.value,
+        disto: disto.value,
+        compass: compass.value,
+        clino: clino.value
+    });
+
+    from.value = to.value;
+    if(parseInt(to.value) > 0){
+        to.value = parseInt(to.value) + 1;
+    }
+    disto.value = '';
+    compass.value = '';
+    clino.value = '';
+
+    return false;
+
+}, false);
+
+for (var i = 0; i < test_legs.length; i++) {
+    add_leg(test_legs[i]);
+};
+
+};
+        </script>
+        <style>
+        body{margin:1%; font-family: sans-serif; font-size: 10px; background:#000; color: #eee; }
+        input{ width:6%; background:#333; border:0; color:#fff;}
+        label{ dwidth:5%; }
+        button{ width:7%; padding:1px; background:#666; border:0; color:#fff; margin-left:2px; }
+        svg{ margin:2% 4%; width:90%; height:90%; }
+        </style>
+    </head>
+    <body style="width:100%; height:100%">
+        <form id="form">
+            <label for="from">From </label><input id="from" placeholder="From" value="E">
+            <label for="to">To </label><input id="to" placeholder="To" value="1">
+            <label for="disto">Disto </label><input id="disto" placeholder="m">
+            <label for="compass">Compass </label><input id="compass" placeholder="deg">
+            <label for="clino">Clino </label><input id="clino" placeholder="deg">
+            <button type="submit">Go</button>
+        </form>
+        <svg id="survey" style="" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+            </defs>
+        </svg>
+    </body>
+</html>
