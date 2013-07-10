@@ -56,6 +56,7 @@ var stations = {
 };
 
 function add_leg(data){
+    preview = {};
     legs.push(data);
     if(stations[data.to]){ console.warn('station', data.to, 'redefined'); };
     stations[data.to] = {
@@ -63,6 +64,13 @@ function add_leg(data){
         y: stations[data.from].y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino))
     };
 
+    redraw();
+}
+var preview = {};
+function preview_leg(data){
+    preview.from = stations[data.from];
+    preview.x = stations[data.from].x + Math.sin(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
+    preview.y = stations[data.from].y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
     redraw();
 }
 
@@ -80,6 +88,12 @@ function redraw(){
         if(stations[name].x > max_x){ max_x = stations[name].x; }
         if(stations[name].y > max_y){ max_y = stations[name].y; }
     };
+    if(preview){
+        if(preview.x < min_x){ min_x = preview.x; }
+        if(preview.y < min_y){ min_y = preview.y; }
+        if(preview.x > max_x){ max_x = preview.x; }
+        if(preview.y > max_y){ max_y = preview.y; }
+    }
 
     scale = Math.min(svg.offsetHeight / (max_y-min_y), svg.offsetWidth / (max_x-min_x));
 
@@ -89,6 +103,17 @@ function redraw(){
     for (var i = 0; i < legs.length; i++) {
         draw_leg(legs[i]);
     };
+
+    if(preview.from){
+        var element = document.createElementNS(svgNS, "line");
+        element.setAttribute("x1", preview.from.x * scale + offset_x);
+        element.setAttribute("y1", preview.from.y * scale + offset_y);
+        element.setAttribute("x2", preview.x * scale + offset_x);
+        element.setAttribute("y2", preview.y * scale + offset_y);
+        element.setAttribute("stroke", '#339');
+        element.setAttribute("stroke-width", '2px');
+        svg.appendChild(element);
+    }
 
 }
 
@@ -100,7 +125,10 @@ function draw_leg(data){
     element.setAttribute("x2", stations[data.to].x * scale + offset_x);
     element.setAttribute("y2", stations[data.to].y * scale + offset_y);
     element.setAttribute("stroke", '#fff');
+    element.setAttribute("stroke-width", '2px');
     svg.appendChild(element);
+
+    element.addEventListener('click', function(){console.log(element);})
 }
 
 var form = document.getElementById('form');
@@ -118,6 +146,26 @@ function focus(){
 }
 disto.addEventListener('click', function(event){
     disto.focus();
+});
+
+disto.addEventListener('keyup', function(event){
+    preview_leg({
+        from: from.value,
+        to: to.value,
+        disto: disto.value,
+        compass: compass.value,
+        clino: clino.value
+    });
+});
+
+compass.addEventListener('keyup', function(event){
+    preview_leg({
+        from: from.value,
+        to: to.value,
+        disto: disto.value,
+        compass: compass.value,
+        clino: clino.value
+    });
 });
 
 form.addEventListener('submit', function(event){
@@ -146,9 +194,9 @@ form.addEventListener('submit', function(event){
 
 }, false);
 
-// for (var i = 0; i < test_legs.length; i++) {
-//     add_leg(test_legs[i]);
-// };
+for (var i = 0; i < test_legs.length; i++) {
+    add_leg(test_legs[i]);
+};
 
 };
         </script>
