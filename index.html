@@ -55,6 +55,12 @@ var stations = {
     'E': {x: 0, y: 0}
 };
 
+function set_sizes(){
+    svg.style.height = window.innerHeight - 150 + 'px';
+    svg.style.width = window.innerWidth - 20 + 'px';
+};
+set_sizes();
+
 function add_leg(data){
     preview = {};
     legs.push(data);
@@ -207,7 +213,7 @@ for (var i = 0; i < test_legs.length; i++) {
             text-align: center;}
         input{ width:6%; background:#333; border:0; color:#fff;}
         button{ width:7%; padding:1px; background:#666; border:0; color:#fff; margin-left:2px; }
-        svg{ margin:2% 4%; width:90%; height:90%; }
+        svg{ margin:35px 10px; }
 
         .zero{width:0; overflow:hidden;}
 
@@ -218,6 +224,7 @@ for (var i = 0; i < test_legs.length; i++) {
             margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
         }
         .keyboard{
+            position:fixed; bottom:0; width:100%;
             background:#222;
             text-align: center;
         }
