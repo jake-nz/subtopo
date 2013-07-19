@@ -50,8 +50,8 @@ function degToRad(deg){
 
 var svg = document.getElementById("survey");
 
-var legs = [];
-var stations;
+var legs = JSON.parse(localStorage.getItem("legs")) || [];
+var stations = JSON.parse(localStorage.getItem("stations"));
 
 function set_sizes(){
     svg.style.height = window.innerHeight - 150 + 'px';
@@ -74,6 +74,9 @@ function add_leg(data){
         y: stations[data.from].y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino))
     };
 
+    localStorage.setItem("legs", JSON.stringify(legs));
+    localStorage.setItem("stations", JSON.stringify(stations));
+
     redraw();
 
     var disto = data.disto && data.disto.toString() || '     ';
@@ -91,11 +94,13 @@ function add_leg(data){
 }
 var preview = {};
 function preview_leg(data){
-    console.log(data);
-    preview.from = stations[data.from];
-    console.log(stations[data.from].x, data.disto, data.compass);
-    preview.x = stations[data.from].x + Math.sin(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
-    preview.y = stations[data.from].y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
+    if(stations){
+        preview.from = stations[data.from];
+    }else{
+        preview.from = {x:0,y:0};
+    }
+    preview.x = preview.from.x + Math.sin(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
+    preview.y = preview.from.y - Math.cos(degToRad(data.compass))*data.disto*Math.cos(degToRad(data.clino));
     redraw();
 }
 
@@ -228,15 +233,17 @@ form.addEventListener('submit', function(event){
 
 }, false);
 
-for (var i = 0; i < test_legs.length; i++) {
-    add_leg(test_legs[i]);
-};
+// for (var i = 0; i < test_legs.length; i++) {
+//     add_leg(test_legs[i]);
+// };
 
 document.getElementById('from_text').addEventListener('click', function(){
     var lines = text_pre.innerText.split('\n');
     text_pre.innerText = 'From    To      Disto  Compass  Clino\n';
     legs = [];
     stations = null;
+    localStorage.removeItem('legs');
+    localStorage.removeItem('stations');
     lines.forEach(function(line){
         var bits = line.split(/\s+/);
         if(bits[0] != 'From' && bits[0]){
@@ -245,6 +252,21 @@ document.getElementById('from_text').addEventListener('click', function(){
     });
 });
 
+    redraw();
+    legs.forEach(function(data){
+        var disto = data.disto && data.disto.toString() || '     ';
+    while(disto.length < 5 ){
+        disto = ' ' + disto;
+    }
+
+    var compass = data.compass.toString();
+    while(compass.length < 5 ){
+        compass = ' ' + compass;
+    }
+
+    text_pre.innerText += data.from + '\t' + data.to + '\t' + disto + '\t' + compass + '\t' + data.clino + '\n';
+
+    });
 
 };
         </script>
